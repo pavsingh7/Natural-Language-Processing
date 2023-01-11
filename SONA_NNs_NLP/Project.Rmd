@@ -1,12 +1,12 @@
 ---
-title: "Assignment 2: Neural Networks"
+title: "South African National Address: A Natural Language Proccessing & Neural Networks Application"
 subtitle: | 
-  | Data Science for Industry
+  | Predicting President using SONA Speeches
 author:
-- 'Pavan Singh (SNGPAV003)'
+- 'Pavan Singh'
 date: "`r format(Sys.time(), '%d %B %Y')`"
-institute: "Department of Statistical Sciences, University of Cape Town"
-tags: "STA4026S"
+institute: ""
+tags: ""
 output: 
   pdf_document:
     toc: true
@@ -15,7 +15,7 @@ output:
 ```{r setup, include=FALSE, message=FALSE, warning=FALSE, echo=FALSE, fig.align='center'}
 knitr::opts_chunk$set(echo = TRUE)
 rm(list=ls())
-setwd("~/sngpav003@myuct.ac.za - Google Drive/My Drive/Masters 2022/Data Science for Industry/Assignment 2")
+setwd("~/Library/CloudStorage/GoogleDrive-pavansingho23@gmail.com/My Drive/Portfolio/Projects/Mini Project Space/Natural-Language-Processing/SONA_NNs_NLP")
 
 set.seed(1)
 ```
@@ -23,38 +23,37 @@ set.seed(1)
 \newpage
 # Introduction 
 
-In this assignment we shall apply several key learnings from the Data Science for Industry course, particularly text mining and neural network applications to create our very own neural network to predict the president of South Africa given a sentence of text - more details shall be further outlined below. 
+We shall apply several key learnings from text mining and neural network applications to create our very own neural network to predict the president of South Africa given a sentence of text - more details shall be further outlined below. 
 
 ## Problem and Task
 
-We are tasked with building a neural network that, given a sentence of text, predicts which president was the source of that sentence. We then, shall use this configured neural network and assess the out-of-sample performance for this classifier. 
+We are to build a neural network that, given a sentence of text, predicts which president was the source of that sentence. We then, shall use this configured neural network and assess the out-of-sample performance for this classifier. 
 
-The problem task is essentially one of classification.  Classification is one of the two major problem spaces in supervised learning. It essentially entails an approach for predicting qualitative responses. Here, we  regard the action of predicting a qualitative response for an observation (sentence of text) as classifying that observation (sentence) since it involves assigning the observation (sentence) to a category, or class (a president). So, as mentioned the context of this assignment is around the implementation of classification algorithms, specifically (but not limited to) artificial neural networks - the details for which shall be discussed later on. Using our neural network results we can compare and benchmark the accuracy and classifications with other widely-used classifiers; namely, multinomial logistic regression, decision trees, random forests and gradient boosted machines.
+The problem task is essentially one of classification.  Classification is one of the two major problem spaces in supervised learning. It essentially entails an approach for predicting qualitative responses. Here, we  regard the action of predicting a qualitative response for an observation (sentence of text) as classifying that observation (sentence) since it involves assigning the observation (sentence) to a category, or class (a president). So, as mentioned the context of this project is around the implementation of classification algorithms, specifically (but not limited to) artificial neural networks - the details for which shall be discussed later on. Using our neural network results we can compare and benchmark the accuracy and classifications with other widely-used classifiers; namely, multinomial logistic regression, decision trees, random forests and gradient boosted machines.
 
-## Plan of Development
+## Project Overview
 
-We begin the analysis by quickly loading up the packages, data and providing a brief description of it. Essentially this is the setup phase, before we get to playing around with the data. We then shall be cleaning and pre-processing the data, before conducting a brief data exploration. Here, our goal is to familiarise ourselves with the data at hand, so as to help consolidate our approach in later stages of analysis and to better inform the splitting of the data into training and testing sets. We also briefly look at the aggregated sentiment of each president across their addresses given. We then look to turn the data into a bag-of-words model. At this stage we look at further processing the text to look for removing stop works or generating TF-IDF weighted counts. Next, we introduce neural networks. We start by giving some brief, high level theoretical background to our application, before discussing our modelling approach. We also look to discuss the data imbalance problem faced, training and testing splits, hyper-parameter tuning and methods of assessing performance. Finally, we get to applying and building our neural network structures - the results of which are briefly discussed. To provide greater context of the results, we also look at several different other classifiers, as such, the sections which follow the neural networks look at the results of conducting several other classification algorithms. In the penultimate section of this assignment, we compare the results of the optimal neural network classifier and other classification algorithms generated. Finally, we conclude this assignment with a brief discussion highlighting the topics covered in this assignment and  a brief summary of the analysis and results, as well as some limitations encountered and perhaps, further improvements that can be made to the analysis.
+We begin the analysis by quickly loading up the packages, data and providing a brief description of it. Essentially this is the set-up phase, before we get to playing around with the data. We then shall be cleaning and pre-processing the data, before conducting a brief data exploration. Here, our goal is to familiarise ourselves with the data at hand, so as to help consolidate our approach in later stages of analysis and to better inform the splitting of the data into training and testing sets. We also briefly look at the aggregated sentiment of each president across their addresses given. We then look to turn the data into a bag-of-words model. At this stage we look at further processing the text to look for removing stop works or generating TF-IDF weighted counts. Next, we introduce neural networks. We start by giving some brief, high level theoretical background to our application, before discussing our modelling approach. We also look to discuss the data imbalance problem faced, training and testing splits, hyper-parameter tuning and methods of assessing performance. Finally, we get to applying and building our neural network structures - the results of which are briefly discussed. To provide greater context of the results, we also look at several different other classifiers, as such, the sections which follow the neural networks look at the results of conducting several other classification algorithms. In the penultimate section of this project, we compare the results of the optimal neural network classifier and other classification algorithms generated. Finally, we conclude this project with a brief discussion highlighting the topics covered in this project and  a brief summary of the analysis and results, as well as some limitations encountered and perhaps, further improvements that can be made to the analysis.
 
 ***
 # Setup and Data 
 
-In this stage of our report, we load up all the packages we shall be using for this assignment, as well as provide a brief data description. The main package that is used would be the Tidyverse library, which in fact is a collection of R packages designed for data manipulation/wrangling. We also make use of Keras and TensorFlow extensively to build, compile and fit our neural network models. 
+In this stage of our report, we load up all the packages we shall be using for this project, as well as provide a brief data description. The main package that is used would be the Tidyverse library, which in fact is a collection of R packages designed for data manipulation/wrangling. We also make use of Keras and TensorFlow extensively to build, compile and fit our neural network models. 
 
 The data is made available in the zip file `sona-addresses-1994-2022.zip`. It contains text from State of the Nation Address speeches from 1994 to 2022. The State of the Nation Address of the President of South Africa (SONA) is an annual event in which the President of South Africa reports on the status of the nation, normally to the resumption of a joint sitting of Parliament. The data is sources from the [SONA website](https://www.gov.za/state-nation-address). We note that we don't simply have 28 text files (speeches) as in the years that elections took place, a SONA happens twice, once before and again after the election. As such we have 35 documents (speeches) in total. 
-
 To read in the several data `.txt` files to R we used the `readtext()` function from the *readtext* package. We then converted the read in data to a tibble, so as to prepare for cleaning and tidying of the data using *dplyr* functionality in R.
 
 
 ```{r,echo=FALSE, message=FALSE, warning=FALSE}
 # Load Packages
 if (!require("pacman")) install.packages("pacman")
-p_load(readtext, keras, tensorflow, tidyverse, ggplot2, ggpubr, stringr, wordcloud, tidytext, stopwords, plotly, lubridate, DMwR, caret, nnet, randomForest, gbm, ROSE, pROC,multiROC, rpart)
+p_load(readtext, keras, tensorflow, tidyverse, ggplot2, ggpubr, stringr, wordcloud, tidytext, stopwords, plotly, lubridate, DMwR, caret, nnet, randomForest, gbm, ROSE, pROC, multiROC, rpart)
 ```
 
 
 ```{r read in and save data, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # read in txt data to file
-speechs <- readtext::readtext("/Users/pavansingh/Library/CloudStorage/GoogleDrive-sngpav003@myuct.ac.za/My Drive/Masters 2022/Data Science for Industry/Assignment 2/sona-addresses-1994-2022/*.txt")
+speechs <- readtext::readtext("~/Library/CloudStorage/GoogleDrive-pavansingho23@gmail.com/My Drive/Portfolio/Projects/Mini Project Space/Natural-Language-Processing/SONA_NNs_NLP/sona-addresses-1994-2022/*.txt")
 
 
 # convert to tibble
@@ -69,9 +68,9 @@ save(speechs, file = "speech.txt")
 *** 
 # Data Cleaning and Pre-Processing
 
-At this stage in the assignment we look to start some initial data cleaning and pre-processing with respects to turning our text data into tidy data. 
+At this stage in the project we look to start some initial data cleaning and pre-processing with respects to turning our text data into tidy data. 
 
-We start by cleaning  the date variable. Turning the date into a format that will be easier to work with (if we want to). We use the `parse_datetime()` function from the *lubridate* package. We also add a new column, called *president* using `mutate()`, which essentially just indicates the president who gave each respective speech. This will become more important later on when we generate tokens (extract individual sentences from the text). We also convert all the text in the tibble to lower case. Next we look at turning the text into tidy format. Tidy data is essentially just a way of consistently organizing your data that often makes subsequent analysis easier, particularly since we shall be using tidyverse packages for cleaning and wrangling.  Whilst turning our  data into tidy format, we simultaneously conduct tokenisation. A token is a whatever unit of text is meaningful for your analysis: it could be a word, a word pair, a sentence, a paragraph, or even  chapter of text. For our problem, we shall tokenize by sentences - as this is our desired input for our classifiers. We do this now, as to get our data in tidy format requires us to decide what the level of the analysis is going to be - what the “token” is.  We use the `unnest_tokens()` function to perform tokenization by splitting text up into the required tokens (sentences), and creating a new data frame with one token per row i.e. tidy text data. Whilst tokenising our text, we also conduct some cleaning of the text. Specifically, we look to remove some of the dates that occur at the start of the speeches, as well as the backslashes and escape sequences within the text data. Once we have processed this data (cleaning the text, tokenising the data, and transforming to tidy format), we also ensure to remove stop words from our sentences (tokens). Note, we also created a separate tibble, which consists of text that has been tokenized by words, this is simply for exploratory purposes that we can use to better understand the language of the presidents. As such, we shall use both tibbles containing sentence tokens and word tokens in the exploratory section next.
+We start by cleaning the date variable. Turning the date into a format that will be easier to work with (if we want to). We use the `parse_datetime()` function from the *lubridate* package. We also add a new column, called *president* using `mutate()`, which essentially just indicates the president who gave each respective speech. This will become more important later on when we generate tokens (extract individual sentences from the text). We also convert all the text in the tibble to lower case. Next we look at turning the text into tidy format. Tidy data is essentially just a way of consistently organizing your data that often makes subsequent analysis easier, particularly since we shall be using tidyverse packages for cleaning and wrangling.  Whilst turning our  data into tidy format, we simultaneously conduct tokenisation. A token is a whatever unit of text is meaningful for your analysis: it could be a word, a word pair, a sentence, a paragraph, or even  chapter of text. For our problem, we shall tokenize by sentences - as this is our desired input for our classifiers. We do this now, as to get our data in tidy format requires us to decide what the level of the analysis is going to be - what the “token” is.  We use the `unnest_tokens()` function to perform tokenization by splitting text up into the required tokens (sentences), and creating a new data frame with one token per row i.e. tidy text data. Whilst tokenising our text, we also conduct some cleaning of the text. Specifically, we look to remove some of the dates that occur at the start of the speeches, as well as the backslashes and escape sequences within the text data. Once we have processed this data (cleaning the text, tokenising the data, and transforming to tidy format), we also ensure to remove stop words from our sentences (tokens). Note, we also created a separate tibble, which consists of text that has been tokenized by words, this is simply for exploratory purposes that we can use to better understand the language of the presidents. As such, we shall use both tibbles containing sentence tokens and word tokens in the exploratory section next.
 
 
 
@@ -110,7 +109,6 @@ max(speechs$date) - min(speechs$date)
 
 
 ```{r adding new columns, echo=FALSE, include=FALSE}
-
 # add president column
 speechs <- speechs %>% mutate(president = NA)
 for(i in 1:nrow(speechs)){
@@ -119,6 +117,8 @@ for(i in 1:nrow(speechs)){
 ```
 
 ```{r select sample of speechs, echo=FALSE, include=FALSE}
+
+# select sample of speechs
 set.seed(5073)
 sample_speech <- speechs %>% slice_sample(n = 3) %>% select(date,text)
 sample_speech
@@ -137,7 +137,7 @@ speechs
 # what to unnest tokens as
 unnest_reg <- "[^\\w_#@']"
 
-# tokenize sentences
+# clean text and tokenize sentences
 tidy_speech.sentences <- speechs %>% 
   mutate(text = str_replace_all(text, '(\\n)', ' ')) %>%
   mutate(text = str_replace_all(text, '\"', ''))  %>% 
@@ -149,7 +149,7 @@ tidy_speech.sentences <- speechs %>%
   select(date, president, sentences, doc_id)          #choose the variables we need
 tidy_speech.sentences
 
-# tokenize words
+# clean text and tokenize words
 tidy_speech.words <- speechs %>% 
   mutate(text = str_replace_all(text, '(\\n)', ' ')) %>%
   mutate(text = str_replace_all(text, '\"', ''))  %>% 
@@ -297,7 +297,7 @@ suppressMessages(review_tf_idf %>%
   theme(plot.title = element_text(size = 20L, face = "bold"), plot.caption = element_text(face = "bold.italic"), legend.position = 'none'))
 ```
 
-What this plot is telling us is which are the main words that separate one president from the other. A clear and easy example to understand this is the word "covid" used by Rampahosa in some of his speeches. This word holds a high TF-IDF score as it is not used by any other president in their speeches. Similarly, we can say the same for other words which hold high TF-IDF scores for other presidents, like the word "compatriots" mentioned by Zuma in his speeches. De Klerk, interestingly, in his one speech, uses words which clearly distinguishes him from the other presidents. In general we can see that each president, has several words which they tend to use a lot more than others. This could become important in our classification models.
+What this plot is telling us is **which are the main words that separate one president from the other**. A clear and easy example to understand this is the word "covid" used by Rampahosa in some of his speeches. This word holds a high TF-IDF score as it is not used by any other president in their speeches. Similarly, we can say the same for other words which hold high TF-IDF scores for other presidents, like the word "compatriots" mentioned by Zuma in his speeches. De Klerk, interestingly, in his one speech, uses words which clearly distinguishes him from the other presidents. In general we can see that each president, has several words which they tend to use a lot more than others. This could become important in our classification models.
 
 ## Sentiment Analysis
 
@@ -310,7 +310,7 @@ Sentiment analysis is the study of the emotional content of a body of text. When
 
 afinn <- get_sentiments('afinn') 
 bing <- get_sentiments('bing') 
-nrc <- read_tsv("/Users/pavansingh/Library/CloudStorage/GoogleDrive-sngpav003@myuct.ac.za/My Drive/Masters 2022/Data Science for Industry/Lecture 5 Text Mining/NRC-Emotion-Lexicon/NRC-Emotion-Lexicon-Wordlevel-v0.92.txt", col_names = FALSE, col_types = cols(
+nrc <- read_tsv("/Users/pavansingh/Library/CloudStorage/GoogleDrive-pavansingho23@gmail.com/My Drive/Portfolio/Projects/Mini Project Space/Natural-Language-Processing/SONA_NNs_NLP/NRC-Emotion-Lexicon/NRC-Emotion-Lexicon-Wordlevel-v0.92.txt", col_names = FALSE, col_types = cols(
     X1 = col_character(),
     X2 = col_character(),
     X3 = col_double()))
@@ -389,6 +389,7 @@ speechs %>%
   head(5) %>%
   select(text, net_sentiment) 
 ```
+
 ```{r cum sum of sentiment, fig.align='center', fig.height=5, fig.width=10, message=FALSE, warning=FALSE, include=FALSE, eval=FALSE}
 
 # Cumulative Sum of Sentiment
@@ -531,7 +532,7 @@ OG_tfidf <- tfidf
 
 ## Imbalanced Data
 
-A key component and problem for this assignment is the issue of imbalanced data. Imbalanced data typically refers to a problem with classification problems where the classes are not represented equally. For example, given our scenario, we have the following number of sentences for each president:
+A key component and problem for this project is the issue of imbalanced data. Imbalanced data typically refers to a problem with classification problems where the classes are not represented equally. For example, given our scenario, we have the following number of sentences for each president:
 
 |       | De Klerk | Mandela | Mbeki | Motlanthe | Ramaphosa | Zuma |
 |-------|----------|---------|-------|-----------|-----------|------|
@@ -541,7 +542,7 @@ De Klerk has 94 sentences, whilst Mandela and Ramaphosa have over 1000, and Mbek
 
 The *accuracy* paradox is the name for the situation where the accuracy measures may say have excellent accuracy, but this accuracy measure is only reflecting the underlying class distribution. The actual reason that we may be achieving this great accuracy score on an imbalanced data set, is because the models look at the data and decide that the best thing to do is to predict the majority class and achieve high accuracy. Given this, it is important for us to not look at accuracy alone when assessing our classifier algorithms but also other metrics, which we shall discuss further later on. 
 
-Back to the  imbalanced data problem. To overcome this we can look at under-sampling and over-sampling methods. Under-sampling involves removing samples from over-represented classes. Over-sampling involves adding more samples from under-represented classes. For our problem we look at three different sampling methods. The first of which, is under-sampling. Here we simply randomly select sentences from the majority classes equal to the number in the minority class. Although simple, it can be a problem since we are greatly diminishing the data size, and dropping the number of sentences for each president to 94. 
+Back to the imbalanced data problem. To overcome this we can look at under-sampling and over-sampling methods. Under-sampling involves removing samples from over-represented classes. Over-sampling involves adding more samples from under-represented classes. For our problem we look at three different sampling methods. The first of which, is under-sampling. Here we simply randomly select sentences from the majority classes equal to the number in the minority class. Although simple, it can be a problem since we are greatly diminishing the data size, and dropping the number of sentences for each president to 94. 
 
 We also look at applying Synthetic Minority Over-sampling Technique (SMOTE). Without going into great detail, SMOTE is an oversampling method and works by creating synthetic samples from the minority class instead of creating copies. To apply SMOTE, we  make use of the `smote()` function in the *performanceEstimation* package in R. 
 
@@ -656,14 +657,14 @@ OG_bag_of_words[which(OG_bag_of_words$pres_name=="Zuma"),]
 ***
 # Neural Networks
 
-In machine learning, often we are simply trying to predict for a target or class. Loosely speaking, the goal of machine learning is to create a function to map features to some class - for classification tasks. The workflow for neural networks, and machine learning in general, boils down to a straightforward formula. Essentially, once we have our data we will need to split it — into training, testing and validation data sets. We will then train some model — a neural network, for example — on the training data, validate it and tweak parameters on validation data and then evaluate this model on the testing data. This is ultimately, the crux of what we shall do.
+In machine learning, often we are simply trying to predict for a target or class. Loosely speaking, **the goal of machine learning is to create a function to map features to some class** - for classification tasks. The workflow for neural networks, and machine learning in general, boils down to a straightforward formula. Essentially, once we have our data we will need to split it — into training, testing and validation data sets. We will then train some model — a neural network, for example — on the training data, validate it and tweak parameters on validation data and then evaluate this model on the testing data. This is ultimately, the crux of what we shall do.
 
 The inherent power of neural networks comes from their ability to learn the representation in your training data and how best to relate it to the output variable you want to predict. In this sense, neural networks learn the mapping. 
 
 
 ## Background
 
-We shall be concerned with only multi-layer perceptron’s or artificial neural networks for the scope of this assignment. A perceptron is a single neuron model that is a precursor to larger neural networks. A neuron is a simple computational unit that has weighted input signals and produces an output signal using an activation function. Weights on the inputs are very much like the coefficients used in a regression equation; in the sense that these are optimised to achieve the best mapping. The weighted inputs are summed and passed through an activation function. An activation function is a simple mapping of summed weighted input to the output of the neuron. Traditionally, non-linear activation functions are used. This allows the network to combine the inputs in more complex ways and, in turn, provide a richer capability in the functions they can model. Popular activations are sigmoid, softmax and ReLu — each having their own respective properties which make them better or more appropriate than others in a given problem. 
+We shall be concerned with only multi-layer perceptron’s or artificial neural networks for the scope of this project. A perceptron is a single neuron model that is a precursor to larger neural networks. A neuron is a simple computational unit that has weighted input signals and produces an output signal using an activation function. Weights on the inputs are very much like the coefficients used in a regression equation; in the sense that these are optimised to achieve the best mapping. The weighted inputs are summed and passed through an activation function. An activation function is a simple mapping of summed weighted input to the output of the neuron. Traditionally, non-linear activation functions are used. This allows the network to combine the inputs in more complex ways and, in turn, provide a richer capability in the functions they can model. Popular activations are sigmoid, softmax and ReLu — each having their own respective properties which make them better or more appropriate than others in a given problem. 
 
 Neurons are arranged into networks of neurons. A row of neurons is called a layer, and one network can have multiple layers. The input layer takes an input from your data set and provides it to network. Layers after the input layer are called hidden layers because they are not directly exposed to the input. The final hidden layer is called the output layer, and it is responsible for outputting a value or vector of values that correspond to the format required for the problem. The choice of activation function in the output layer is strongly constrained by the type of problem that you are modelling.
 
@@ -2729,7 +2730,7 @@ The only classification algorithm that could not generate a significant model wa
 
 We were tasked with constructing a neural network that given a sentence of text, could predict which president was the source of that sentence. We went about this task by cleaning the data and getting it into tidy format. From here, we briefly explored it. We then set about tokenising the data and getting it into a bag-of-words model format, which we used as the input for our neural networks. We configured both simple and relatively more complex neural networks to try best build the optimal classifier. In an attempt to offset the data imbalance problem, we used ROSE to create a balanced data set. The best performing classification neural network was the Tuned Neural Network 4, which consisted of only one hidden layer with 812 units and Relu activation function, trained on the ROSE data and using a RMSprop optimiser. The model achieved over 50% accuracy and had very high recall scores for certain classes, however failed to correctly predict any positive cases (0 recall) for one class ("Zuma"). We compared this configured neural network model to other classifiers using several classification metrics aside from accuracy which yielded more satisfactory results, having no hyperparameter tuning done for these other classifiers as well. 
 
-The data used in the assignment was text from SONA speeches from 1994 to 2022. From this we created a bag of words model. We identified that the data was highly imbalanced. Ultimately it seemed that most classification algorithms performed better with the balanced ROSE data set. This is in line with the literature, which suggests that classification algorithms perform better with more balanced data - particularly machine learning algorithms. 
+The data used in the project was text from SONA speeches from 1994 to 2022. From this we created a bag of words model. We identified that the data was highly imbalanced. Ultimately it seemed that most classification algorithms performed better with the balanced ROSE data set. This is in line with the literature, which suggests that classification algorithms perform better with more balanced data - particularly machine learning algorithms. 
 
 For further improvement, when constructing our bag of words model we only looks at the 1000 most popular words in sentences. We can further improve the model, by looking at a greater number of words, as such have a probably greater number of features to help our classifiers. However, this would come at a computational cost, particularly for algorithms such as the Random Forest and Gradient Boosted Machine, for example.
 
