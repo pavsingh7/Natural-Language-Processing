@@ -8,4 +8,4 @@ Application of text mining and neural networks to create an artificial (feed-for
 
 I.e,. Built a neural network that, given a sentence of text, predicts which president was the source of that sentence. We compare performance of neural network to that of many benchmark algorithms. 
 
-Key Features: Sentiment Analysis, NLP, Bag-of-words, TFIDF, Neural Networks, Text Cleaning, Imbalanced Data, Classification, Machine Learning, GBM, Random Forest,
+Key Features: Sentiment Analysis, NLP, Bag-of-words, TFIDF, Neural Networks, Text Cleaning, Imbalanced Data, Classification, Machine Learning, GBM, Random Forest.
